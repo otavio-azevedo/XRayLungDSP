@@ -1,6 +1,4 @@
 import cv2
-import numpy as np
-from matplotlib import pyplot as plt
 
 def contrastLungAreas(img):
     for x in range(img.shape[1]):
@@ -22,8 +20,8 @@ def contrastLungAreas(img):
             cv2.floodFill(img, None, seedPoint=(img.shape[1]-1, y), newVal=255, loDiff=3, upDiff=3)  # Fill the background with white color
 
 # Carrega imagens para a aplicação
-#img = cv2.imread("images\\healthy\\1.png", 0)
-img = cv2.imread("images\\unhealthy\\2.png", 0)
+#img = cv2.imread("images\\healthy\\3.png", 0)
+img = cv2.imread("images\\unhealthy\\1.png", 0)
 img_colored = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
 
 # Threshold to segment the area of the lungs
@@ -34,7 +32,7 @@ ret3, img = cv2.threshold(blur, 100, 255, cv2.THRESH_BINARY)
 # Destaca área dos pulmoes
 contrastLungAreas(img)
 
-# Remove ruídos
+# # Remove ruídos
 img = cv2.morphologyEx(img, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (8, 8)))  # "erase" the small points in the resulting mask
 
 # Obtem os contornos da imagem
@@ -47,10 +45,8 @@ contours, hierarchy = cv2.findContours(
 contoursSorted = sorted(contours,key=cv2.contourArea)
 
 # Remove os dois elementos maiores (pulmoes)
-#print(len(contoursSorted))
 contoursSorted.remove(contoursSorted[-1])
 contoursSorted.remove(contoursSorted[-1])
-#print(len(contoursSorted))
 
 # Desenha os contornos na imagem colorida
 result = cv2.drawContours(img_colored, contoursSorted, -1,(0,0,255),3)
@@ -59,22 +55,11 @@ result = cv2.drawContours(img_colored, contoursSorted, -1,(0,0,255),3)
 for i in range(len(contoursSorted)):
     # Se área restante foi maior que 500, considera que existe a presença de possível tumor no CT
     if cv2.contourArea(contoursSorted[i]) > 500: 
-        boolExistMass = True
+        cv2.putText(result,"* ANOMALIA IDENTIFICADA",(10,300),cv2.QT_FONT_NORMAL,1,(255,255,255))
         break
     else:
-        boolExistMass = False
+        cv2.putText(result,"* ANOMALIA NAO IDENTIFICADA",(10,350),cv2.QT_FONT_NORMAL,1,(255,255,255))
     
-print(boolExistMass)
-
-cv2.imshow('Detected contours', result)
+cv2.imshow('Resultado', result)
 cv2.waitKey()
 cv2.destroyAllWindows()
-
-## TODO: 
-# INFORMAR EM QUAL DOS PULMÕES ESTÁ O TUMOR?
-# # Cut the image in half
-# height, width, channels = result.shape
-# right = img_colored[:, :width // 2] #right lung
-# left = img_colored[:, width // 2:] #left lung
-# cv2.imshow('Resultado', right)
-# cv2.imshow('Resultado', left)
